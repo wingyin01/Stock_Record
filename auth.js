@@ -157,11 +157,16 @@ onAuthStateChanged(auth, (user) => {
         signupEmail.value = '';
         signupPassword.value = '';
         signupConfirm.value = '';
+        
+        // Trigger event for other modules
+        document.dispatchEvent(new Event('authStateChanged'));
     } else {
         // User is signed out
         authContainer.style.display = 'flex';
         appContainer.style.display = 'none';
-        userStatus.style.display = 'none';
+        
+        // Trigger event for other modules
+        document.dispatchEvent(new Event('authStateChanged'));
     }
 });
 
