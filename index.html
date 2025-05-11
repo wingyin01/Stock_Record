@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trading Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Direct inline calculation function
+        function calculateTotal() {
+            try {
+                const price = parseFloat(document.getElementById('buying-price').value) || 0;
+                const quantity = parseInt(document.getElementById('stock-quantity').value) || 0;
+                const isUS = document.getElementById('us-market').checked;
+                
+                let total = price * quantity;
+                if (isUS) {
+                    // Convert USD to HKD
+                    total = total * 7.8;
+                }
+                
+                document.getElementById('total-price-hkd').innerHTML = 'HK$' + total.toFixed(2);
+                
+                // Make it flash
+                document.getElementById('total-price-hkd').style.animation = 'none';
+                setTimeout(function() {
+                    document.getElementById('total-price-hkd').style.animation = 'pulse 2s';
+                }, 10);
+                
+                console.log("Inline calculation:", {price, quantity, isUS, total});
+            } catch (e) {
+                console.error("Error in inline calculation:", e);
+            }
+        }
+        
+        // Setup function that runs as soon as possible
+        function setupInlineCalculation() {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', attachListeners);
+            } else {
+                attachListeners();
+            }
+            
+            function attachListeners() {
+                // Wait a bit for everything to initialize
+                setTimeout(function() {
+                    const priceInput = document.getElementById('buying-price');
+                    const quantityInput = document.getElementById('stock-quantity');
+                    const usMarket = document.getElementById('us-market');
+                    const hkMarket = document.getElementById('hk-market');
+                    
+                    if (priceInput && quantityInput) {
+                        // Set up event listeners
+                        priceInput.oninput = calculateTotal;
+                        quantityInput.oninput = calculateTotal;
+                        
+                        if (usMarket && hkMarket) {
+                            usMarket.onchange = calculateTotal;
+                            hkMarket.onchange = calculateTotal;
+                        }
+                        
+                        // Calculate initial value
+                        calculateTotal();
+                    }
+                }, 100);
+            }
+        }
+        
+        // Start the setup process
+        setupInlineCalculation();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Trading Tracker</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="calculator">Stop Loss Calculator</button>
+            <button class="tab-btn" data-tab="trade-entry">Record Trade</button>
+            <button class="tab-btn" data-tab="trade-history">Trade History</button>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Calculator Tab -->
+            <div class="tab-pane active" id="calculator">
+                <div class="market-selection">
+                    <label>Select Market:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="us-market" name="market" value="US" checked onchange="calculateTotal()">
+                        <label for="us-market">US Market</label>
+                        
+                        <input type="radio" id="hk-market" name="market" value="HK" onchange="calculateTotal()">
+                        <label for="hk-market">HK Market</label>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="max-loss">Expected Maximum Loss (HKD):</label>
+                    <input type="number" id="max-loss" placeholder="Enter maximum loss amount in HKD" step="0.01" min="0">
+                    <small>Handling fee will be added in the calculation formula</small>
+                </div>
+                
+                <div class="input-group">
+                    <label for="handling-fee">Handling Fee (USD):</label>
+                    <input type="number" id="handling-fee" value="4" step="0.01" min="0">
+                    <small>Added to the formula: ((-maximum loss + handling fee) / shares) + buying price</small>
+                </div>
+                
+                <div class="input-group">
+                    <label for="buying-price">Buying Stock Price (<span id="price-currency-label">USD</span>):</label>
+                    <input type="number" id="buying-price" placeholder="Enter buying price" step="0.01" min="0" oninput="calculateTotal()">
+                </div>
+                
+                <div class="input-group">
+                    <label for="stock-quantity">Number of Shares:</label>
+                    <input type="number" id="stock-quantity" placeholder="Enter number of shares" step="1" min="1" oninput="calculateTotal()">
+                </div>
+                
+                <div class="total-price-display">
+                    <div class="label">Total Investment:</div>
+                    <div id="total-price-hkd" class="value highlight-value" onclick="calculateTotal()">HK$0.00</div>
+                </div>
+                
+                <button id="calculate-btn">Calculate Stop Loss</button>
+                
+                <div class="result" id="result-container">
+                    <h2>Stop Loss Price: <span id="stop-loss-result">-</span></h2>
+                </div>
+            </div>
+            
+            <!-- Trade Entry Tab -->
+            <div class="tab-pane" id="trade-entry">
+                <h2>Record New Trade</h2>
+                <div class="input-group">
+                    <label for="trade-symbol">Stock Symbol:</label>
+                    <input type="text" id="trade-symbol" placeholder="e.g., AAPL, MSFT">
+                </div>
+                
+                <div class="input-group">
+                    <label>Trade Type:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="buy-trade" name="trade-type" value="buy" checked>
+                        <label for="buy-trade">Buy</label>
+                        
+                        <input type="radio" id="sell-trade" name="trade-type" value="sell">
+                        <label for="sell-trade">Sell</label>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="trade-date">Trade Date:</label>
+                    <input type="date" id="trade-date">
+                </div>
+                
+                <div class="input-group">
+                    <label for="trade-price">Price per Share:</label>
+                    <input type="number" id="trade-price" placeholder="Enter price" step="0.01" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="trade-quantity">Number of Shares:</label>
+                    <input type="number" id="trade-quantity" placeholder="Enter quantity" step="1" min="1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="trade-fee">Commission/Fees:</label>
+                    <input type="number" id="trade-fee" placeholder="Enter fees" step="0.01" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="trade-notes">Notes:</label>
+                    <textarea id="trade-notes" placeholder="Add any notes about this trade"></textarea>
+                </div>
+                
+                <button id="save-trade-btn">Save Trade</button>
+            </div>
+            
+            <!-- Trade History Tab -->
+            <div class="tab-pane" id="trade-history">
+                <h2>Your Trade History</h2>
+                <div class="trade-filters">
+                    <button id="export-trades-btn">Export Trades</button>
+                    <button id="clear-trades-btn">Clear All Trades</button>
+                </div>
+                <div class="trade-table-container">
+                    <table id="trade-history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Symbol</th>
+                                <th>Type</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trade-history-body">
+                            <!-- Trade records will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-trades-message">No trades recorded yet.</div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

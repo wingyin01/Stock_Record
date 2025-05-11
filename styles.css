@@ -1,0 +1,550 @@
+/* Modern Fintech UI - Neumorphic Style */
+
+:root {
+    --primary-bg: #f0f3f8;
+    --component-bg: #f8faff;
+    --accent-color: #4cd964;
+    --accent-soft: #a5f0b4;
+    --secondary-accent: #69a5ff;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --shadow-light: #ffffff;
+    --shadow-dark: rgba(163, 177, 198, 0.5);
+    --buy-color: #34d399;
+    --sell-color: #f87171;
+    --error-color: #ef4444;
+    --border-radius: 16px;
+    --input-radius: 12px;
+    --button-radius: 24px;
+    --font-primary: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 0;
+    margin: 0;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+h1, h2, h3 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    background: linear-gradient(to right, var(--text-primary), var(--secondary-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+/* Neumorphic Card Style */
+.tab-pane {
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark),
+        -8px -8px 16px var(--shadow-light);
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pill-shaped Tabs */
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    background-color: var(--component-bg);
+    padding: 0.5rem;
+    border-radius: var(--button-radius);
+    box-shadow: 
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -4px -4px 8px var(--shadow-light);
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    outline: none;
+    flex: 1;
+    text-align: center;
+    margin: 0 0.25rem;
+}
+
+.tab-btn.active {
+    color: white;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+    box-shadow: 
+        4px 4px 8px var(--shadow-dark),
+        -2px -2px 4px var(--shadow-light);
+}
+
+/* Form Elements */
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.input-group small {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: none;
+    background-color: var(--component-bg);
+    border-radius: var(--input-radius);
+    font-size: 1rem;
+    color: var(--text-primary);
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: 
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -2px -2px 4px var(--shadow-light),
+        0 0 0 3px rgba(105, 165, 255, 0.2);
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Radio buttons */
+.radio-group {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.radio-group input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.radio-group label {
+    position: relative;
+    padding-left: 2rem;
+    cursor: pointer;
+    display: inline-block;
+    font-weight: 400;
+}
+
+.radio-group label:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background-color: var(--component-bg);
+    box-shadow: 
+        inset 2px 2px 4px var(--shadow-dark),
+        inset -2px -2px 4px var(--shadow-light);
+}
+
+.radio-group input[type="radio"]:checked + label:after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+}
+
+/* Buttons */
+button {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--button-radius);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    width: 100%;
+    margin-top: 1.5rem;
+    box-shadow: 
+        4px 4px 8px var(--shadow-dark),
+        -2px -2px 4px var(--shadow-light);
+}
+
+button:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 
+        6px 6px 12px var(--shadow-dark),
+        -3px -3px 6px var(--shadow-light);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 
+        2px 2px 4px var(--shadow-dark),
+        -1px -1px 2px var(--shadow-light);
+}
+
+/* Result Container */
+.result {
+    margin-top: 2rem;
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 
+        4px 4px 8px var(--shadow-dark),
+        -4px -4px 8px var(--shadow-light);
+}
+
+.result h2 {
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+#stop-loss-result {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* Currency Converter Styles */
+.currency-converter {
+    margin-top: 2.5rem;
+    padding: 1.5rem;
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 
+        4px 4px 8px var(--shadow-dark),
+        -4px -4px 8px var(--shadow-light);
+}
+
+.currency-converter h3 {
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+}
+
+.converter-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.converter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.converter-controls select {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: var(--input-radius);
+}
+
+#swap-currencies {
+    background: linear-gradient(135deg, var(--secondary-accent), var(--accent-soft));
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex: none;
+    margin-top: 0;
+}
+
+#convert-btn {
+    margin-top: 1.25rem;
+}
+
+.converter-result {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: var(--input-radius);
+    box-shadow: 
+        inset 2px 2px 4px var(--shadow-dark),
+        inset -2px -2px 4px var(--shadow-light);
+}
+
+.converter-result p {
+    font-size: 1.1rem;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+#converted-amount {
+    display: block;
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-top: 0.5rem;
+    color: var(--accent-color);
+    text-align: center;
+}
+
+/* Trade History Styles */
+.trade-filters {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.trade-filters button {
+    width: auto;
+    margin-top: 0;
+}
+
+#export-trades-btn {
+    background: linear-gradient(135deg, var(--secondary-accent), #74b9ff);
+}
+
+#clear-trades-btn {
+    background: linear-gradient(135deg, #ff7675, var(--error-color));
+}
+
+.trade-table-container {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(163, 177, 198, 0.2);
+}
+
+table th {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+table td {
+    color: var(--text-secondary);
+}
+
+.buy-type {
+    color: var(--buy-color);
+    font-weight: 600;
+}
+
+.sell-type {
+    color: var(--sell-color);
+    font-weight: 600;
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, #ff7675, var(--error-color));
+    color: white;
+    border: none;
+    border-radius: var(--input-radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0;
+}
+
+.delete-btn:hover {
+    opacity: 0.9;
+}
+
+#no-trades-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+/* Market selection styling */
+.market-selection {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: var(--border-radius);
+    box-shadow: 
+        3px 3px 6px var(--shadow-dark),
+        -3px -3px 6px var(--shadow-light);
+}
+
+.market-selection label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1.5rem 1rem;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .trade-filters {
+        flex-direction: column;
+    }
+    
+    table th, table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Animation for buttons and interactive elements */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse-animation {
+    animation: pulse 1.5s infinite;
+}
+
+/* Total Price Display */
+.total-price-display {
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 
+        3px 3px 6px var(--shadow-dark),
+        -3px -3px 6px var(--shadow-light);
+}
+
+.total-price-display .label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.total-price-display .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.highlight-value {
+    animation: pulse 2s;
+    font-size: 1.8rem !important;
+    color: #ff6b6b !important;
+    text-shadow: 0 0 5px rgba(255, 107, 107, 0.3);
+}
