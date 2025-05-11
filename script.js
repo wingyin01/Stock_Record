@@ -1,3 +1,16 @@
+import { 
+    db, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    deleteDoc,
+    query,
+    where,
+    updateDoc
+} from './firebase-config.js';
+import { getCurrentUser } from './auth.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Tab functionality
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -164,9 +177,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Calculate button element not found!");
     }
     
-    // Set default value for maximum loss - removed as per user's request
-    // maxLossInput.value = "500";
-    
     // Separate the calculation logic to a function
     function performCalculation() {
         try {
@@ -248,243 +258,260 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Trade Recording functionality
+    const saveTradeBtn = document.getElementById('save-trade-btn');
     const tradeSymbolInput = document.getElementById('trade-symbol');
     const tradeDateInput = document.getElementById('trade-date');
     const tradePriceInput = document.getElementById('trade-price');
     const tradeQuantityInput = document.getElementById('trade-quantity');
     const tradeFeeInput = document.getElementById('trade-fee');
     const tradeNotesInput = document.getElementById('trade-notes');
-    const saveTradeBtn = document.getElementById('save-trade-btn');
     const tradeHistoryBody = document.getElementById('trade-history-body');
     const noTradesMessage = document.getElementById('no-trades-message');
     const exportTradesBtn = document.getElementById('export-trades-btn');
     const clearTradesBtn = document.getElementById('clear-trades-btn');
     
-    // Set default date to today
-    const today = new Date();
-    const formattedDate = today.toISOString().substr(0, 10);
-    tradeDateInput.value = formattedDate;
+    // Firestore collection reference for trades
+    const getTradesCollection = () => {
+        const user = getCurrentUser();
+        if (!user) return null;
+        return collection(db, 'users', user.uid, 'trades');
+    };
     
-    // Load trades from local storage
-    let trades = JSON.parse(localStorage.getItem('stockTrades')) || [];
-    
-    // Display trades
-    function displayTrades() {
-        if (trades.length === 0) {
-            tradeHistoryBody.innerHTML = '';
-            noTradesMessage.style.display = 'block';
-            return;
-        }
-        
-        noTradesMessage.style.display = 'none';
-        tradeHistoryBody.innerHTML = '';
-        
-        trades.forEach((trade, index) => {
-            const row = document.createElement('tr');
-            
-            // Format date
-            const tradeDate = new Date(trade.date);
-            const formattedDate = `${tradeDate.getFullYear()}-${String(tradeDate.getMonth() + 1).padStart(2, '0')}-${String(tradeDate.getDate()).padStart(2, '0')}`;
-            
-            // Calculate total value
-            const total = (trade.price * trade.quantity).toFixed(2);
-            const typeClass = trade.type === 'buy' ? 'buy-type' : 'sell-type';
-            
-            row.innerHTML = `
-                <td>${formattedDate}</td>
-                <td>${trade.symbol.toUpperCase()}</td>
-                <td class="${typeClass}">${trade.type.toUpperCase()}</td>
-                <td>$${parseFloat(trade.price).toFixed(2)}</td>
-                <td>${trade.quantity}</td>
-                <td>$${total}</td>
-                <td>
-                    <button class="delete-btn" data-index="${index}">Delete</button>
-                </td>
-            `;
-            
-            tradeHistoryBody.appendChild(row);
-        });
-        
-        // Add event listeners to delete buttons
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                trades.splice(index, 1);
-                localStorage.setItem('stockTrades', JSON.stringify(trades));
-                displayTrades();
-            });
-        });
-    }
-    
-    // Save trade
-    saveTradeBtn.addEventListener('click', function() {
-        const symbol = tradeSymbolInput.value.trim();
-        const type = document.querySelector('input[name="trade-type"]:checked').value;
-        const date = tradeDateInput.value;
-        const price = parseFloat(tradePriceInput.value);
-        const quantity = parseInt(tradeQuantityInput.value);
-        const fee = parseFloat(tradeFeeInput.value) || 0;
-        const notes = tradeNotesInput.value.trim();
-        
-        // Validate inputs
-        if (!symbol || !date || isNaN(price) || isNaN(quantity)) {
-            alert('Please fill in all required fields with valid values');
-            return;
-        }
-        
-        if (quantity <= 0) {
-            alert('Number of shares must be greater than 0');
-            return;
-        }
-        
-        // Create trade object
-        const trade = {
-            symbol,
-            type,
-            date,
-            price,
-            quantity,
-            fee,
-            notes,
-            timestamp: new Date().getTime()
-        };
-        
-        // Add to trades array
-        trades.push(trade);
-        
-        // Save to local storage
-        localStorage.setItem('stockTrades', JSON.stringify(trades));
-        
-        // Clear form
-        tradeSymbolInput.value = '';
-        tradePriceInput.value = '';
-        tradeQuantityInput.value = '';
-        tradeFeeInput.value = '';
-        tradeNotesInput.value = '';
-        
-        // Display trades
-        displayTrades();
-        
-        // Show success message
-        alert('Trade saved successfully!');
-    });
-    
-    // Export trades
-    exportTradesBtn.addEventListener('click', function() {
-        if (trades.length === 0) {
-            alert('No trades to export');
-            return;
-        }
-        
-        const csv = [
-            'Date,Symbol,Type,Price,Quantity,Fee,Total,Notes'
-        ];
-        
-        trades.forEach(trade => {
-            const total = (trade.price * trade.quantity).toFixed(2);
-            csv.push(
-                `${trade.date},${trade.symbol},${trade.type},${trade.price},${trade.quantity},${trade.fee},${total},"${trade.notes}"`
-            );
-        });
-        
-        const csvContent = csv.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'stock_trades.csv');
-        a.click();
-    });
-    
-    // Clear trades
-    clearTradesBtn.addEventListener('click', function() {
-        if (confirm('Are you sure you want to delete all trades? This action cannot be undone.')) {
-            trades = [];
-            localStorage.setItem('stockTrades', JSON.stringify(trades));
-            displayTrades();
-        }
-    });
-    
-    // Initialize display
-    displayTrades();
-    
-    // Currency Converter functionality
-    const amountToConvertInput = document.getElementById('amount-to-convert');
-    const fromCurrencySelect = document.getElementById('from-currency');
-    const toCurrencySelect = document.getElementById('to-currency');
-    const swapCurrenciesBtn = document.getElementById('swap-currencies');
-    const convertBtn = document.getElementById('convert-btn');
-    const convertedAmountSpan = document.getElementById('converted-amount');
-    
-    // Swap currencies with animation
-    swapCurrenciesBtn.addEventListener('click', function() {
-        const tempCurrency = fromCurrencySelect.value;
-        fromCurrencySelect.value = toCurrencySelect.value;
-        toCurrencySelect.value = tempCurrency;
-        
-        // Add pulse animation class
-        this.classList.add('pulse-animation');
-        
-        // If there's a value, update the conversion
-        if (amountToConvertInput.value.trim() !== '') {
-            updateConvertedAmount();
-        }
-        
-        // Remove animation class after animation completes
-        setTimeout(() => {
-            this.classList.remove('pulse-animation');
-        }, 1500);
-    });
-    
-    // Function to update converted amount
-    function updateConvertedAmount() {
-        const amountStr = amountToConvertInput.value;
-        if (amountStr === "") {
-            convertedAmountSpan.textContent = "-";
-            return;
-        }
-        
-        const amount = parseFloat(amountStr);
-        const fromCurrency = fromCurrencySelect.value;
-        const toCurrency = toCurrencySelect.value;
-        
-        if (isNaN(amount)) {
-            convertedAmountSpan.textContent = 'Please enter a valid amount';
-            return;
-        }
-        
-        const convertedAmount = convertCurrency(amount, fromCurrency, toCurrency);
-        const currencySymbol = toCurrency === 'USD' ? '$' : 'HK$';
-        convertedAmountSpan.textContent = `${currencySymbol}${convertedAmount.toFixed(2)}`;
-    }
-    
-    // Add event listeners for live updates
-    convertBtn.addEventListener('click', updateConvertedAmount);
-    amountToConvertInput.addEventListener('input', updateConvertedAmount);
-    fromCurrencySelect.addEventListener('change', updateConvertedAmount);
-    toCurrencySelect.addEventListener('change', updateConvertedAmount);
-    
-    // Function to fetch stock data (for future implementation with API key)
-    async function fetchStockData(symbol) {
+    // Display trades from Firestore
+    async function displayTrades() {
         try {
-            // This is a placeholder for future implementation with a real API key
-            // For now, we'll just return a mock response
-            console.log(`Fetching data for ${symbol}...`);
-            return {
-                symbol: symbol,
-                price: 0,
-                change: 0,
-                changePercent: 0
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            const tradesCollection = getTradesCollection();
+            const querySnapshot = await getDocs(tradesCollection);
+            
+            // Clear existing table
+            tradeHistoryBody.innerHTML = '';
+            
+            if (querySnapshot.empty) {
+                tradeHistoryBody.innerHTML = '';
+                noTradesMessage.style.display = 'block';
+                return;
+            }
+            
+            noTradesMessage.style.display = 'none';
+            
+            querySnapshot.forEach(doc => {
+                const trade = doc.data();
+                const tradeId = doc.id;
+                const row = document.createElement('tr');
+                
+                // Format the date
+                const dateObj = new Date(trade.date);
+                const formattedDate = dateObj.toLocaleDateString();
+                
+                // Calculate total
+                const total = (trade.price * trade.quantity + trade.fee).toFixed(2);
+                const priceFormatted = Number(trade.price).toFixed(2);
+                const feeFormatted = Number(trade.fee).toFixed(2);
+                
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${trade.symbol.toUpperCase()}</td>
+                    <td class="${trade.type === 'buy' ? 'buy-type' : 'sell-type'}">${trade.type.toUpperCase()}</td>
+                    <td>${priceFormatted}</td>
+                    <td>${trade.quantity}</td>
+                    <td>${total}</td>
+                    <td>
+                        <button class="delete-trade-btn" data-id="${tradeId}">Delete</button>
+                    </td>
+                `;
+                
+                tradeHistoryBody.appendChild(row);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-trade-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const tradeId = this.getAttribute('data-id');
+                    await deleteTrade(tradeId);
+                });
+            });
+            
+        } catch (error) {
+            console.error("Error displaying trades:", error);
+        }
+    }
+    
+    // Save trade to Firestore
+    async function saveTrade() {
+        try {
+            const tradesCollection = getTradesCollection();
+            if (!tradesCollection) {
+                console.error("User not authenticated");
+                return;
+            }
+            
+            // Get trade values
+            const symbol = tradeSymbolInput.value.trim();
+            const type = document.querySelector('input[name="trade-type"]:checked').value;
+            const date = tradeDateInput.value;
+            const price = parseFloat(tradePriceInput.value);
+            const quantity = parseInt(tradeQuantityInput.value);
+            const fee = parseFloat(tradeFeeInput.value) || 0;
+            const notes = tradeNotesInput.value.trim();
+            
+            // Validate inputs
+            if (!symbol || !date || isNaN(price) || isNaN(quantity)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Create trade object
+            const trade = {
+                symbol,
+                type,
+                date,
+                price,
+                quantity,
+                fee,
+                notes,
+                timestamp: new Date().toISOString()
             };
             
-            // When you have an API key, you can use the fetch MCP like this:
-            // const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=YOUR_API_KEY`);
-            // const data = await response.json();
-            // return data;
+            // Save to Firestore
+            await addDoc(tradesCollection, trade);
+            
+            // Reset form
+            tradeSymbolInput.value = '';
+            tradePriceInput.value = '';
+            tradeQuantityInput.value = '';
+            tradeFeeInput.value = '';
+            tradeNotesInput.value = '';
+            
+            // Set date to today if not already set
+            if (!tradeDateInput.value) {
+                const today = new Date().toISOString().split('T')[0];
+                tradeDateInput.value = today;
+            }
+            
+            // Display updated trades
+            displayTrades();
+            
         } catch (error) {
-            console.error('Error fetching stock data:', error);
-            return null;
+            console.error("Error saving trade:", error);
+            alert('Error saving trade: ' + error.message);
         }
     }
+    
+    // Delete trade from Firestore
+    async function deleteTrade(tradeId) {
+        try {
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            const tradeRef = doc(db, 'users', user.uid, 'trades', tradeId);
+            await deleteDoc(tradeRef);
+            
+            // Update display
+            displayTrades();
+            
+        } catch (error) {
+            console.error("Error deleting trade:", error);
+            alert('Error deleting trade: ' + error.message);
+        }
+    }
+    
+    // Export trades as CSV
+    async function exportTradesCSV() {
+        try {
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            const tradesCollection = getTradesCollection();
+            const querySnapshot = await getDocs(tradesCollection);
+            
+            if (querySnapshot.empty) {
+                alert('No trades to export');
+                return;
+            }
+            
+            // Create CSV header
+            let csv = 'Date,Symbol,Type,Price,Quantity,Fee,Total,Notes\n';
+            
+            // Add each trade as a row
+            querySnapshot.forEach(doc => {
+                const trade = doc.data();
+                const total = (trade.price * trade.quantity + trade.fee).toFixed(2);
+                
+                // Format CSV row (handle commas in notes)
+                csv += `${trade.date},${trade.symbol.toUpperCase()},${trade.type.toUpperCase()},${trade.price},${trade.quantity},${trade.fee},${total},"${trade.notes}"\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'trade_history.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+        } catch (error) {
+            console.error("Error exporting trades:", error);
+            alert('Error exporting trades: ' + error.message);
+        }
+    }
+    
+    // Clear all trades
+    async function clearAllTrades() {
+        try {
+            if (!confirm('Are you sure you want to delete ALL your trades? This cannot be undone.')) {
+                return;
+            }
+            
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            const tradesCollection = getTradesCollection();
+            const querySnapshot = await getDocs(tradesCollection);
+            
+            // Delete each trade document
+            const deletePromises = [];
+            querySnapshot.forEach(document => {
+                deletePromises.push(deleteDoc(doc(db, 'users', user.uid, 'trades', document.id)));
+            });
+            
+            await Promise.all(deletePromises);
+            
+            // Update display
+            displayTrades();
+            
+        } catch (error) {
+            console.error("Error clearing trades:", error);
+            alert('Error clearing trades: ' + error.message);
+        }
+    }
+    
+    // Set up event listeners
+    if (saveTradeBtn) {
+        saveTradeBtn.addEventListener('click', saveTrade);
+    }
+    
+    if (exportTradesBtn) {
+        exportTradesBtn.addEventListener('click', exportTradesCSV);
+    }
+    
+    if (clearTradesBtn) {
+        clearTradesBtn.addEventListener('click', clearAllTrades);
+    }
+    
+    // Set today's date as default in the date input
+    if (tradeDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        tradeDateInput.value = today;
+    }
+    
+    // Initialize trade display when authentication state changes
+    document.addEventListener('authStateChanged', () => {
+        displayTrades();
+    });
 });
