@@ -364,87 +364,59 @@ button:active {
     text-align: center;
 }
 
-/* Trade History Styles */
+/* Trade Filters & Categories Styles */
 .trade-filters {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 1.5rem;
     gap: 1rem;
 }
 
-.trade-filters button {
-    width: auto;
-    margin-top: 0;
+.filter-controls, .export-controls {
+    display: flex;
+    gap: 0.5rem;
 }
 
-#export-trades-btn {
-    background: linear-gradient(135deg, var(--secondary-accent), #74b9ff);
-}
-
-#clear-trades-btn {
-    background: linear-gradient(135deg, #ff7675, var(--error-color));
-}
-
-.trade-table-container {
-    overflow-x: auto;
-    margin-bottom: 1.5rem;
+.filter-btn {
     background-color: var(--component-bg);
-    border-radius: var(--border-radius);
-    padding: 1rem;
-    box-shadow: 
-        inset 3px 3px 6px var(--shadow-dark),
-        inset -3px -3px 6px var(--shadow-light);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-table th, table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid rgba(163, 177, 198, 0.2);
-}
-
-table th {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-table td {
     color: var(--text-secondary);
-}
-
-.buy-type {
-    color: var(--buy-color);
-    font-weight: 600;
-}
-
-.sell-type {
-    color: var(--sell-color);
-    font-weight: 600;
-}
-
-.delete-btn {
-    background: linear-gradient(135deg, #ff7675, var(--error-color));
-    color: white;
     border: none;
-    border-radius: var(--input-radius);
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--button-radius);
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 0;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    margin: 0;
+    box-shadow: 
+        3px 3px 6px var(--shadow-dark),
+        -3px -3px 6px var(--shadow-light);
 }
 
-.delete-btn:hover {
-    opacity: 0.9;
+.filter-btn.active {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+    color: white;
 }
 
-#no-trades-message {
+.trade-category {
+    margin-bottom: 2rem;
+    display: none;
+}
+
+.trade-category.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.trade-category h3 {
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid var(--accent-color);
+}
+
+.no-trades-message {
     text-align: center;
-    padding: 2rem;
+    padding: 1.5rem;
     color: var(--text-secondary);
     font-style: italic;
     background-color: var(--component-bg);
@@ -452,6 +424,11 @@ table td {
     box-shadow: 
         inset 3px 3px 6px var(--shadow-dark),
         inset -3px -3px 6px var(--shadow-light);
+}
+
+.trade-filters .export-controls button {
+    width: auto;
+    margin-top: 0;
 }
 
 /* Market selection styling */
@@ -916,4 +893,70 @@ table td {
 @keyframes slideDown {
     from { transform: translateY(-50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+/* Trade History Styles */
+.trade-table-container {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    background-color: var(--component-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(163, 177, 198, 0.2);
+}
+
+table th {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+table td {
+    color: var(--text-secondary);
+}
+
+.buy-type {
+    color: var(--buy-color);
+    font-weight: 600;
+}
+
+.sell-type {
+    color: var(--sell-color);
+    font-weight: 600;
+}
+
+.delete-trade-btn {
+    background: linear-gradient(135deg, #ff7675, var(--error-color));
+    color: white;
+    border: none;
+    border-radius: var(--input-radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0;
+}
+
+.delete-trade-btn:hover {
+    opacity: 0.9;
+}
+
+#export-trades-btn {
+    background: linear-gradient(135deg, var(--secondary-accent), #74b9ff);
+}
+
+#clear-trades-btn {
+    background: linear-gradient(135deg, #ff7675, var(--error-color));
 }

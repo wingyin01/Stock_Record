@@ -7,7 +7,9 @@ import {
     onAuthStateChanged,
     signOut,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    setPersistence,
+    browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     getFirestore, 
@@ -37,6 +39,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Set persistent authentication
+setPersistence(auth, browserLocalPersistence)
+  .catch((error) => {
+    console.error("Auth persistence error:", error);
+  });
 
 export { 
     auth, 

@@ -162,17 +162,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Verify the Calculate button has a click event handler
+    // Directly connect the Calculate button to performCalculation function
     if (calculateBtn) {
         console.log("Adding click event to Calculate button");
-        
-        // Add a simple immediate-feedback click handler
-        calculateBtn.addEventListener('click', function() {
-            console.log("Calculate button was clicked!");
+        calculateBtn.onclick = function() {
+            console.log("Calculate button clicked directly!");
             stopLossResult.textContent = "Calculating...";
-            
-            // Add a small delay to show the "Calculating..." message before proceeding
-            setTimeout(performCalculation, 100);
+            performCalculation();
+        };
+        
+        // Also add a custom event listener as a backup
+        document.addEventListener('calculateStopLoss', function() {
+            console.log("Calculate stop loss event received!");
+            stopLossResult.textContent = "Calculating...";
+            performCalculation();
         });
     } else {
         console.error("Calculate button element not found!");
@@ -294,45 +297,79 @@ document.addEventListener('DOMContentLoaded', function() {
             const tradesCollection = getTradesCollection();
             const querySnapshot = await getDocs(tradesCollection);
             
-            // Clear existing table
-            tradeHistoryBody.innerHTML = '';
+            // Clear existing tables
+            document.getElementById('trade-history-body').innerHTML = '';
+            document.getElementById('position-trades-body').innerHTML = '';
+            document.getElementById('swing-trades-body').innerHTML = '';
             
-            if (querySnapshot.empty) {
-                tradeHistoryBody.innerHTML = '';
-                noTradesMessage.style.display = 'block';
-                return;
+            // Track if we have trades for each category
+            let hasAnyTrades = false;
+            let hasPositionTrades = false;
+            let hasSwingTrades = false;
+            
+            if (!querySnapshot.empty) {
+                hasAnyTrades = true;
+                
+                querySnapshot.forEach(doc => {
+                    const trade = doc.data();
+                    const tradeId = doc.id;
+                    
+                    // Format the date
+                    const dateObj = new Date(trade.date);
+                    const formattedDate = dateObj.toLocaleDateString();
+                    
+                    // Calculate total
+                    const total = (trade.price * trade.quantity + trade.fee).toFixed(2);
+                    const priceFormatted = Number(trade.price).toFixed(2);
+                    
+                    // Create row for all trades table
+                    const allTradesRow = document.createElement('tr');
+                    allTradesRow.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td>${trade.symbol.toUpperCase()}</td>
+                        <td class="${trade.type === 'buy' ? 'buy-type' : 'sell-type'}">${trade.type.toUpperCase()}</td>
+                        <td>${trade.tradingStyle === 'position' ? 'Position' : 'Swing'}</td>
+                        <td>${priceFormatted}</td>
+                        <td>${trade.quantity}</td>
+                        <td>${total}</td>
+                        <td>
+                            <button class="delete-trade-btn" data-id="${tradeId}">Delete</button>
+                        </td>
+                    `;
+                    
+                    document.getElementById('trade-history-body').appendChild(allTradesRow);
+                    
+                    // Create row for the appropriate trading style table
+                    const styleRow = document.createElement('tr');
+                    styleRow.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td>${trade.symbol.toUpperCase()}</td>
+                        <td class="${trade.type === 'buy' ? 'buy-type' : 'sell-type'}">${trade.type.toUpperCase()}</td>
+                        <td>${priceFormatted}</td>
+                        <td>${trade.quantity}</td>
+                        <td>${total}</td>
+                        <td>
+                            <button class="delete-trade-btn" data-id="${tradeId}">Delete</button>
+                        </td>
+                    `;
+                    
+                    if (trade.tradingStyle === 'position') {
+                        hasPositionTrades = true;
+                        document.getElementById('position-trades-body').appendChild(styleRow.cloneNode(true));
+                    } else if (trade.tradingStyle === 'swing') {
+                        hasSwingTrades = true;
+                        document.getElementById('swing-trades-body').appendChild(styleRow.cloneNode(true));
+                    }
+                });
             }
             
-            noTradesMessage.style.display = 'none';
+            // Show/hide "no trades" messages
+            document.getElementById('no-trades-message').style.display = hasAnyTrades ? 'none' : 'block';
+            document.getElementById('no-position-trades-message').style.display = hasPositionTrades ? 'none' : 'block';
+            document.getElementById('no-swing-trades-message').style.display = hasSwingTrades ? 'none' : 'block';
             
-            querySnapshot.forEach(doc => {
-                const trade = doc.data();
-                const tradeId = doc.id;
-                const row = document.createElement('tr');
-                
-                // Format the date
-                const dateObj = new Date(trade.date);
-                const formattedDate = dateObj.toLocaleDateString();
-                
-                // Calculate total
-                const total = (trade.price * trade.quantity + trade.fee).toFixed(2);
-                const priceFormatted = Number(trade.price).toFixed(2);
-                const feeFormatted = Number(trade.fee).toFixed(2);
-                
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${trade.symbol.toUpperCase()}</td>
-                    <td class="${trade.type === 'buy' ? 'buy-type' : 'sell-type'}">${trade.type.toUpperCase()}</td>
-                    <td>${priceFormatted}</td>
-                    <td>${trade.quantity}</td>
-                    <td>${total}</td>
-                    <td>
-                        <button class="delete-trade-btn" data-id="${tradeId}">Delete</button>
-                    </td>
-                `;
-                
-                tradeHistoryBody.appendChild(row);
-            });
+            // By default, show all trades section
+            showTradeSection('all');
             
             // Add event listeners to delete buttons
             document.querySelectorAll('.delete-trade-btn').forEach(button => {
@@ -359,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get trade values
             const symbol = tradeSymbolInput.value.trim();
             const type = document.querySelector('input[name="trade-type"]:checked').value;
+            const tradingStyle = document.querySelector('input[name="trading-style"]:checked').value;
             const date = tradeDateInput.value;
             const price = parseFloat(tradePriceInput.value);
             const quantity = parseInt(tradeQuantityInput.value);
@@ -375,6 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const trade = {
                 symbol,
                 type,
+                tradingStyle,
                 date,
                 price,
                 quantity,
@@ -512,6 +551,23 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTradesBtn.addEventListener('click', clearAllTrades);
     }
     
+    // Trade filter buttons
+    const showAllTradesBtn = document.getElementById('show-all-trades');
+    const showPositionTradesBtn = document.getElementById('show-position-trades');
+    const showSwingTradesBtn = document.getElementById('show-swing-trades');
+    
+    if (showAllTradesBtn) {
+        showAllTradesBtn.addEventListener('click', () => showTradeSection('all'));
+    }
+    
+    if (showPositionTradesBtn) {
+        showPositionTradesBtn.addEventListener('click', () => showTradeSection('position'));
+    }
+    
+    if (showSwingTradesBtn) {
+        showSwingTradesBtn.addEventListener('click', () => showTradeSection('swing'));
+    }
+    
     // Set today's date as default in the date input
     if (tradeDateInput) {
         const today = new Date().toISOString().split('T')[0];
@@ -603,6 +659,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Get selected trading style
+            const tradingStyle = document.querySelector('input[name="watchlist-style"]:checked').value;
+            
             // Get calculator values
             const selectedMarket = document.querySelector('input[name="market"]:checked').value;
             const buyingPrice = parseFloat(buyingPriceInput.value);
@@ -625,6 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 entryPrice: buyingPrice,
                 stopLoss: stopLossValue,
                 quantity,
+                tradingStyle,
                 timestamp: new Date().toISOString()
             };
             
@@ -678,11 +738,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add $ or HK$ prefix based on market
                 const priceCurrency = item.market === 'US' ? '$' : 'HK$';
                 
+                // Get the trading style (default to position if not present)
+                const tradingStyle = item.tradingStyle ? 
+                    (item.tradingStyle === 'position' ? 'Position' : 'Swing') : 'Position';
+                
                 row.innerHTML = `
                     <td>${item.symbol}</td>
                     <td>${priceCurrency}${entryPriceFormatted}</td>
                     <td>${priceCurrency}${stopLossFormatted}</td>
                     <td>${item.quantity}</td>
+                    <td>${tradingStyle}</td>
                     <td>
                         <button class="delete-watchlist-btn" data-id="${itemId}">Delete</button>
                     </td>
@@ -723,6 +788,31 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error("Error deleting watchlist item:", error);
             alert('Error deleting watchlist item: ' + error.message);
+        }
+    }
+
+    // Function to show a specific trades section
+    function showTradeSection(section) {
+        // Hide all sections
+        document.querySelectorAll('.trade-category').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        // Remove active class from all filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show the selected section
+        if (section === 'position') {
+            document.getElementById('position-trades-section').classList.add('active');
+            document.getElementById('show-position-trades').classList.add('active');
+        } else if (section === 'swing') {
+            document.getElementById('swing-trades-section').classList.add('active');
+            document.getElementById('show-swing-trades').classList.add('active');
+        } else {
+            document.getElementById('all-trades-section').classList.add('active');
+            document.getElementById('show-all-trades').classList.add('active');
         }
     }
 });

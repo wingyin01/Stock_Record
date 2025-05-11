@@ -172,20 +172,20 @@
                 
                 <div class="input-group">
                     <label for="buying-price">Buying Stock Price (<span id="price-currency-label">USD</span>):</label>
-                    <input type="number" id="buying-price" placeholder="Enter buying price" step="0.01" min="0" oninput="calculateTotal()">
+                    <input type="number" id="buying-price" placeholder="Enter buying price" step="0.01" min="0" oninput="updateTotalDirectly()">
                 </div>
                 
                 <div class="input-group">
                     <label for="stock-quantity">Number of Shares:</label>
-                    <input type="number" id="stock-quantity" placeholder="Enter number of shares" step="1" min="1" oninput="calculateTotal()">
+                    <input type="number" id="stock-quantity" placeholder="Enter number of shares" step="1" min="1" oninput="updateTotalDirectly()">
                 </div>
                 
                 <div class="total-price-display">
                     <div class="label">Total Investment:</div>
-                    <div id="total-price-hkd" class="value highlight-value" onclick="calculateTotal()">HK$0.00</div>
+                    <div id="total-price-hkd" class="value highlight-value">HK$0.00</div>
                 </div>
                 
-                <button id="calculate-btn">Calculate Stop Loss</button>
+                <button id="calculate-btn" onclick="document.dispatchEvent(new Event('calculateStopLoss'))">Calculate Stop Loss</button>
                 
                 <div class="result" id="result-container">
                     <h2>Stop Loss Price: <span id="stop-loss-result">-</span></h2>
@@ -279,6 +279,7 @@
                                 <th>Entry Price</th>
                                 <th>Stop Loss</th>
                                 <th>Quantity</th>
+                                <th>Trading Style</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -296,6 +297,41 @@
     <script src="auth.js" type="module"></script>
     <script src="script.js" type="module"></script>
     
+    <!-- Add global function to update the total -->
+    <script>
+        // Global function to update the total investment
+        function updateTotalDirectly() {
+            try {
+                const priceInput = document.getElementById('buying-price');
+                const quantityInput = document.getElementById('stock-quantity');
+                const totalDisplay = document.getElementById('total-price-hkd');
+                const isUS = document.getElementById('us-market').checked;
+                
+                if (!priceInput || !quantityInput || !totalDisplay) {
+                    console.error("Missing elements for direct update");
+                    return;
+                }
+                
+                const price = parseFloat(priceInput.value) || 0;
+                const quantity = parseInt(quantityInput.value) || 0;
+                
+                // Calculate total
+                let total = price * quantity;
+                if (isUS) {
+                    // Convert from USD to HKD (using fixed rate 7.8)
+                    total = total * 7.8;
+                }
+                
+                // Update the display
+                totalDisplay.innerHTML = `HK$${total.toFixed(2)}`;
+                
+                console.log("DIRECT UPDATE:", {price, quantity, total, isUS});
+            } catch (e) {
+                console.error("Error in direct update:", e);
+            }
+        }
+    </script>
+    
     <!-- Symbol input modal -->
     <div id="symbol-modal" class="modal">
         <div class="modal-content">
@@ -308,6 +344,18 @@
                 <input type="text" id="watchlist-symbol" placeholder="e.g., AAPL, MSFT">
                 <small>Enter the stock symbol to add to your watchlist</small>
             </div>
+            
+            <div class="input-group">
+                <label>Trading Style:</label>
+                <div class="radio-group">
+                    <input type="radio" id="position-watchlist" name="watchlist-style" value="position" checked>
+                    <label for="position-watchlist">Position Trade</label>
+                    
+                    <input type="radio" id="swing-watchlist" name="watchlist-style" value="swing">
+                    <label for="swing-watchlist">Swing Trade</label>
+                </div>
+            </div>
+            
             <div class="modal-actions">
                 <button id="cancel-watchlist-btn" class="cancel-btn">Cancel</button>
                 <button id="confirm-watchlist-btn">Save</button>
