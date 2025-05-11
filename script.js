@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const calculateBtn = document.getElementById('calculate-btn');
     const stopLossResult = document.getElementById('stop-loss-result');
     const totalPriceHKD = document.getElementById('total-price-hkd');
+    const saveToWatchlistBtn = document.getElementById('save-to-watchlist-btn');
     
     // Check if elements exist
     console.log("Element checks:");
@@ -201,12 +202,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isNaN(maxLossHKD) || isNaN(handlingFee) || isNaN(buyingPrice) || isNaN(stockQuantity)) {
                 console.log("Input validation failed - missing values");
                 stopLossResult.textContent = 'Please fill in all fields with valid numbers';
+                saveToWatchlistBtn.style.display = 'none';
                 return;
             }
             
             if (stockQuantity <= 0) {
                 console.log("Input validation failed - quantity must be > 0");
                 stopLossResult.textContent = 'Number of shares must be greater than 0';
+                saveToWatchlistBtn.style.display = 'none';
                 return;
             }
             
@@ -228,8 +231,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Display result
                 if (stopLossPrice <= 0) {
                     stopLossResult.textContent = 'N/A (Stop loss price would be negative)';
+                    saveToWatchlistBtn.style.display = 'none';
                 } else {
                     stopLossResult.textContent = `$${stopLossPrice.toFixed(4)}`;
+                    saveToWatchlistBtn.style.display = 'block';
                 }
             } else {
                 // For HK market:
@@ -244,8 +249,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Display result
                 if (stopLossPrice <= 0) {
                     stopLossResult.textContent = 'N/A (Stop loss price would be negative)';
+                    saveToWatchlistBtn.style.display = 'none';
                 } else {
                     stopLossResult.textContent = `HK$${stopLossPrice.toFixed(4)}`;
+                    saveToWatchlistBtn.style.display = 'block';
                 }
             }
             
@@ -254,6 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error("Error in calculate function:", error);
             stopLossResult.textContent = "Error in calculation. See console for details.";
+            saveToWatchlistBtn.style.display = 'none';
         }
     }
     
@@ -513,5 +521,208 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize trade display when authentication state changes
     document.addEventListener('authStateChanged', () => {
         displayTrades();
+        displayWatchlist();
     });
+    
+    // Watchlist functionality
+    const symbolModal = document.getElementById('symbol-modal');
+    const closeSymbolModalBtn = document.getElementById('close-symbol-modal');
+    const cancelWatchlistBtn = document.getElementById('cancel-watchlist-btn');
+    const confirmWatchlistBtn = document.getElementById('confirm-watchlist-btn');
+    const watchlistSymbolInput = document.getElementById('watchlist-symbol');
+    const watchlistBody = document.getElementById('watchlist-body');
+    const noWatchlistMessage = document.getElementById('no-watchlist-message');
+    
+    // Firestore collection reference for watchlist
+    const getWatchlistCollection = () => {
+        const user = getCurrentUser();
+        if (!user) return null;
+        return collection(db, 'users', user.uid, 'watchlist');
+    };
+    
+    // Save to watchlist button click handler
+    if (saveToWatchlistBtn) {
+        saveToWatchlistBtn.addEventListener('click', function() {
+            // Show symbol input modal
+            symbolModal.style.display = 'block';
+            watchlistSymbolInput.value = '';
+            watchlistSymbolInput.focus();
+        });
+    }
+    
+    // Close modal button click handler
+    if (closeSymbolModalBtn) {
+        closeSymbolModalBtn.addEventListener('click', function() {
+            symbolModal.style.display = 'none';
+        });
+    }
+    
+    // Cancel button click handler
+    if (cancelWatchlistBtn) {
+        cancelWatchlistBtn.addEventListener('click', function() {
+            symbolModal.style.display = 'none';
+        });
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === symbolModal) {
+            symbolModal.style.display = 'none';
+        }
+    });
+    
+    // Confirm button click handler
+    if (confirmWatchlistBtn) {
+        confirmWatchlistBtn.addEventListener('click', saveToWatchlist);
+    }
+    
+    // Handle Enter key press in symbol input
+    if (watchlistSymbolInput) {
+        watchlistSymbolInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                saveToWatchlist();
+            }
+        });
+    }
+    
+    // Save to watchlist function
+    async function saveToWatchlist() {
+        try {
+            const watchlistCollection = getWatchlistCollection();
+            if (!watchlistCollection) {
+                console.error("User not authenticated");
+                return;
+            }
+            
+            // Get symbol from input
+            const symbol = watchlistSymbolInput.value.trim().toUpperCase();
+            
+            // Validate symbol
+            if (!symbol) {
+                alert('Please enter a stock symbol');
+                return;
+            }
+            
+            // Get calculator values
+            const selectedMarket = document.querySelector('input[name="market"]:checked').value;
+            const buyingPrice = parseFloat(buyingPriceInput.value);
+            const quantity = parseInt(stockQuantityInput.value);
+            
+            // Get stop loss value from display
+            const stopLossText = stopLossResult.textContent;
+            let stopLossValue;
+            
+            if (selectedMarket === 'US') {
+                stopLossValue = parseFloat(stopLossText.replace('$', ''));
+            } else {
+                stopLossValue = parseFloat(stopLossText.replace('HK$', ''));
+            }
+            
+            // Create watchlist item object
+            const watchlistItem = {
+                symbol,
+                market: selectedMarket,
+                entryPrice: buyingPrice,
+                stopLoss: stopLossValue,
+                quantity,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to Firestore
+            await addDoc(watchlistCollection, watchlistItem);
+            
+            // Close modal
+            symbolModal.style.display = 'none';
+            
+            // Display updated watchlist
+            displayWatchlist();
+            
+            // Show success message
+            alert(`${symbol} added to your watchlist!`);
+            
+        } catch (error) {
+            console.error("Error saving to watchlist:", error);
+            alert('Error saving to watchlist: ' + error.message);
+        }
+    }
+    
+    // Display watchlist from Firestore
+    async function displayWatchlist() {
+        try {
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            const watchlistCollection = getWatchlistCollection();
+            const querySnapshot = await getDocs(watchlistCollection);
+            
+            // Clear existing table
+            watchlistBody.innerHTML = '';
+            
+            if (querySnapshot.empty) {
+                watchlistBody.innerHTML = '';
+                noWatchlistMessage.style.display = 'block';
+                return;
+            }
+            
+            noWatchlistMessage.style.display = 'none';
+            
+            querySnapshot.forEach(doc => {
+                const item = doc.data();
+                const itemId = doc.id;
+                const row = document.createElement('tr');
+                
+                // Format price and stop loss values
+                const entryPriceFormatted = Number(item.entryPrice).toFixed(2);
+                const stopLossFormatted = Number(item.stopLoss).toFixed(4);
+                
+                // Add $ or HK$ prefix based on market
+                const priceCurrency = item.market === 'US' ? '$' : 'HK$';
+                
+                row.innerHTML = `
+                    <td>${item.symbol}</td>
+                    <td>${priceCurrency}${entryPriceFormatted}</td>
+                    <td>${priceCurrency}${stopLossFormatted}</td>
+                    <td>${item.quantity}</td>
+                    <td>
+                        <button class="delete-watchlist-btn" data-id="${itemId}">Delete</button>
+                    </td>
+                `;
+                
+                watchlistBody.appendChild(row);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-watchlist-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const itemId = this.getAttribute('data-id');
+                    await deleteWatchlistItem(itemId);
+                });
+            });
+            
+        } catch (error) {
+            console.error("Error displaying watchlist:", error);
+        }
+    }
+    
+    // Delete watchlist item from Firestore
+    async function deleteWatchlistItem(itemId) {
+        try {
+            if (!confirm('Are you sure you want to remove this item from your watchlist?')) {
+                return;
+            }
+            
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            const itemRef = doc(db, 'users', user.uid, 'watchlist', itemId);
+            await deleteDoc(itemRef);
+            
+            // Update display
+            displayWatchlist();
+            
+        } catch (error) {
+            console.error("Error deleting watchlist item:", error);
+            alert('Error deleting watchlist item: ' + error.message);
+        }
+    }
 });

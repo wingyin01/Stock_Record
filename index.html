@@ -138,6 +138,7 @@
         
         <div class="tabs">
             <button class="tab-btn active" data-tab="calculator">Stop Loss Calculator</button>
+            <button class="tab-btn" data-tab="watchlist">Watchlist</button>
             <button class="tab-btn" data-tab="trade-entry">Record Trade</button>
             <button class="tab-btn" data-tab="trade-history">Trade History</button>
         </div>
@@ -188,6 +189,7 @@
                 
                 <div class="result" id="result-container">
                     <h2>Stop Loss Price: <span id="stop-loss-result">-</span></h2>
+                    <button id="save-to-watchlist-btn" class="secondary-button" style="display: none;">Save to Watchlist</button>
                 </div>
             </div>
             
@@ -265,11 +267,52 @@
                 </div>
                 <div id="no-trades-message">No trades recorded yet.</div>
             </div>
+            
+            <!-- Watchlist Tab -->
+            <div class="tab-pane" id="watchlist">
+                <h2>Your Watchlist</h2>
+                <div class="watchlist-container">
+                    <table id="watchlist-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Entry Price</th>
+                                <th>Stop Loss</th>
+                                <th>Quantity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlist-body">
+                            <!-- Watchlist items will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-watchlist-message">No stocks in your watchlist yet.</div>
+            </div>
         </div>
     </div>
     
     <script src="firebase-config.js" type="module"></script>
     <script src="auth.js" type="module"></script>
     <script src="script.js" type="module"></script>
+    
+    <!-- Symbol input modal -->
+    <div id="symbol-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add to Watchlist</h3>
+                <button class="close-modal" id="close-symbol-modal">&times;</button>
+            </div>
+            <div class="input-group">
+                <label for="watchlist-symbol">Stock Symbol:</label>
+                <input type="text" id="watchlist-symbol" placeholder="e.g., AAPL, MSFT">
+                <small>Enter the stock symbol to add to your watchlist</small>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-watchlist-btn" class="cancel-btn">Cancel</button>
+                <button id="confirm-watchlist-btn">Save</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
